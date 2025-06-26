@@ -66,30 +66,37 @@ export default function Dashboard({ incident, onUpdate }) {
     initialUpdate: ''
   });
   const [showAdvanced, setShowAdvanced] = useState(false);
-  React.useEffect(() => {
+ React.useEffect(() => {
   const interval = setInterval(() => {
     setTrains(prevTrains =>
-      prevTrains.map((train) => {
-        const timeRegex = /^\d{1,2}:\d{2}$/;
-        const [time] = train.timeStranded.split(' ');
-        if (!timeRegex.test(time)) return train;
+      prevTrains.map(train => {
+        // Extract the original time (e.g., "11:42") even if "(48m)" is already attached
+        const timeMatch = train.timeStranded?.match(/^(\d{1,2}:\d{2})/);
+        if (!timeMatch) return train;
 
-        const [hh, mm] = time.split(':').map(Number);
-        const strandedTime = new Date();
-        strandedTime.setHours(hh, mm, 0, 0);
+        const originalTime = timeMatch[1];
         const now = new Date();
-        const diffMins = Math.max(0, Math.round((now - strandedTime) / 60000));
+        const [hours, minutes] = originalTime.split(':').map(Number);
+
+        const strandedTime = new Date(now);
+        strandedTime.setHours(hours, minutes, 0, 0);
+
+        const diffMins = Math.floor((now - strandedTime) / 60000);
+        const updatedStranded = `${originalTime} (${diffMins}m)`;
 
         return {
           ...train,
-          timeStranded: `${time} (${diffMins}m)`
+          timeStranded: updatedStranded
         };
       })
     );
-  }, 60000);
+  }, 60000); // Every 60 seconds
 
   return () => clearInterval(interval);
 }, []);
+
+    
+  
 
   const [selectedTrain, setSelectedTrain] = useState(null);
   const [originalTrainId, setOriginalTrainId] = useState(null);
