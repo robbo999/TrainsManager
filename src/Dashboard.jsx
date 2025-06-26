@@ -12,36 +12,42 @@ const RiskBadge = ({ level }) => {
   return <span className={`px-2 py-1 rounded-full text-sm ${colors[level]}`}>{level}</span>;
 };
 
-export default function Dashboard() {
-    
-   const [trains, setTrains] = useState([]);
-const [timer, setTimer] = useState(0);
-const [isRunning, setIsRunning] = useState(false);
+export default function Dashboard({ incident, onUpdate }) {
+  const [trains, setTrains] = useState(incident.trains || []);
+  const [timer, setTimer] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
 
-useEffect(() => {
-  let interval = null;
-  if (isRunning) {
-    interval = setInterval(() => {
-      setTimer((prev) => prev + 1);
-    }, 1000);
-  } else if (!isRunning && timer !== 0) {
-    clearInterval(interval);
-  }
-  return () => clearInterval(interval);
-}, [isRunning, timer]);
+  useEffect(() => {
+    let interval = null;
+    if (isRunning) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev + 1);
+      }, 1000);
+    } else if (!isRunning && timer !== 0) {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isRunning, timer]);
 
-const startTimer = () => setIsRunning(true);
-const stopTimer = () => setIsRunning(false);
-const resetTimer = () => {
-  setIsRunning(false);
-  setTimer(0);
-};
+  useEffect(() => {
+    if (typeof onUpdate === 'function') {
+      onUpdate({ ...incident, trains });
+    }
+    return () => {};
+  }, [trains]);
 
-const formatTime = (secs) => {
-  const minutes = String(Math.floor(secs / 60)).padStart(2, '0');
-  const seconds = String(secs % 60).padStart(2, '0');
-  return `${minutes}:${seconds}`;
-};
+  const startTimer = () => setIsRunning(true);
+  const stopTimer = () => setIsRunning(false);
+  const resetTimer = () => {
+    setIsRunning(false);
+    setTimer(0);
+  };
+
+  const formatTime = (secs) => {
+    const minutes = String(Math.floor(secs / 60)).padStart(2, '0');
+    const seconds = String(secs % 60).padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  };
  
     
     
@@ -119,7 +125,8 @@ const formatTime = (secs) => {
     };
     const reviewMinutes = score >= 11 ? 15 : score >= 6 ? 20 : 30;
 const nextReviewDue = new Date(Date.now() + reviewMinutes * 60000);
-    setTrains([...trains, newEntry]);
+console.log('🚆 Adding train:', newEntry);    
+setTrains([...trains, newEntry]);
     setNewTrain({
       train: '', location: '', class: '', serviceGroup: '', passengerGroup: 'Green',
       passengerRationale: '', canMove: false, timeStranded: '', ccilRef: '', btpRef: '', initialUpdate: ''
@@ -770,4 +777,3 @@ const nextReviewDue = new Date(Date.now() + reviewMinutes * 60000);
     </div>
   );
 }
-
