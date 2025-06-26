@@ -4,28 +4,50 @@ import LandingPage from './LandingPage';
 import Dashboard from './Dashboard';
 import { supabase } from './supabaseClient';
 
+const isLive = import.meta.env.MODE === 'production';
+
+
 export default function App() {
   const [incidents, setIncidents] = useState([]);
-
-  // Load incidents from Supabase on first load
-  useEffect(() => {
-    const fetchIncidents = async () => {
+useEffect(() => {
+  if (isLive) {
+    const fetchFromSupabase = async () => {
       const { data, error } = await supabase.from('incidents').select('*');
-      if (error) console.error('Fetch error:', error);
-      else setIncidents(data);
-    };
-    fetchIncidents();
-  }, []);
-
-  // Save updated incidents to Supabase
-  useEffect(() => {
-    const saveIncidents = async () => {
-      for (const incident of incidents) {
-        await supabase.from('incidents').upsert(incident);
+      if (error) {
+        console.error('❌ Supabase fetch error:', error);
+      } else {
+        console.log('✅ Fetched from Supabase:', data);
+        setIncidents(data);
       }
     };
-    if (incidents.length > 0) saveIncidents();
-  }, [incidents]);
+    fetchFromSupabase();
+  } else {
+    const stored = localStorage.getItem('incidents');
+    if (stored) {
+      setIncidents(JSON.parse(stored));
+    }
+  }
+}, []);
+
+
+
+  useEffect(() => {
+
+
+  if (isLive) {
+    const saveToSupabase = async () => {
+      for (const incident of incidents) {
+        const { error } = await supabase.from('incidents').upsert(incident);
+        if (error) console.error('❌ Supabase save error:', error);
+        else console.log('✅ Incident saved to Supabase:', incident.id);
+      }
+    };
+    if (incidents.length > 0) saveToSupabase();
+  } else {
+    localStorage.setItem('incidents', JSON.stringify(incidents));
+  }
+}, [incidents]);
+
 
   return (
     <Router>
@@ -51,7 +73,6 @@ function LandingWrapper({ incidents, setIncidents }) {
       trains: []
     };
     setIncidents([...incidents, newIncident]);
-   
   };
 
   return (
