@@ -68,16 +68,18 @@ function LandingWrapper({ incidents, setIncidents }) {
   const navigate = useNavigate();
 
   const createIncident = () => {
-    const id = 'incident-' + Date.now();
-    const newIncident = {
-      id,
-      title: `Incident ${incidents.length + 1}`,
-      createdAt: new Date().toISOString(),
-      status: "Ongoing",
-      trains: []
-    };
-    setIncidents([...incidents, newIncident]);
+  console.log('🆕 createIncident triggered');
+  const id = 'incident-' + Date.now();
+  const newIncident = {
+    id,
+    title: `Incident ${incidents.length + 1}`,
+    createdAt: new Date().toISOString(),
+    status: "Ongoing",
+    trains: []
   };
+  setIncidents([...incidents, newIncident]);
+};
+
 
   return (
     <LandingPage
