@@ -31,22 +31,26 @@ useEffect(() => {
 
 
 
-  useEffect(() => {
-
-
+useEffect(() => {
   if (isLive) {
+    console.log('🌀 incidents useEffect triggered');
+    console.log('📝 Trying to save incidents:', incidents);
+
     const saveToSupabase = async () => {
       for (const incident of incidents) {
+        console.log('🧪 Upserting:', incident);
         const { error } = await supabase.from('incidents').upsert(incident);
         if (error) console.error('❌ Supabase save error:', error);
         else console.log('✅ Incident saved to Supabase:', incident.id);
       }
     };
+
     if (incidents.length > 0) saveToSupabase();
   } else {
     localStorage.setItem('incidents', JSON.stringify(incidents));
   }
 }, [incidents]);
+
 
 
   return (
