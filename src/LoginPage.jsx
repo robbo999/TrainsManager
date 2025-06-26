@@ -14,7 +14,7 @@ export default function LoginPage({ onLogin }) {
       setError('Invalid username or password');
     }
   };
-
+  
   return (
      <div className="min-h-screen bg-[#0d1117] text-white flex flex-col justify-center items-center p-6">
     <div className="text-center mb-8">
