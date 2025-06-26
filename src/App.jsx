@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useParams } from 'react-router-dom';
+import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import LandingPage from './LandingPage';
 import Dashboard from './Dashboard';
 import { supabase } from './supabaseClient';
+import LoginPage from './LoginPage';
+
 
 const isLive = import.meta.env.MODE === 'production';
 
 
 export default function App() {
+    const navigate = useNavigate();
   const [incidents, setIncidents] = useState([]);
 useEffect(() => {
   if (isLive) {
@@ -28,6 +31,40 @@ useEffect(() => {
     }
   }
 }, []);
+const [authenticated, setAuthenticated] = useState(
+  localStorage.getItem('authenticated') === 'true'
+);
+
+
+if (!authenticated) {
+  return (
+    <LoginPage onLogin={() => setAuthenticated(true)} />
+  );
+}
+
+return (
+  <Routes>
+    <Route
+  path="/"
+  element={
+    <LandingWrapper
+      incidents={incidents}
+      setIncidents={setIncidents}
+      setAuthenticated={setAuthenticated} // ✅ Add this
+    />
+  }
+/>
+    <Route
+      path="/incident/:id"
+      element={
+        <IncidentWrapper
+          incidents={incidents}
+          setIncidents={setIncidents}
+        />
+      }
+    />
+  </Routes>
+);
 
 
 
@@ -54,18 +91,18 @@ useEffect(() => {
 
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<LandingWrapper incidents={incidents} setIncidents={setIncidents} />} />
-        <Route path="/incident/:id" element={<IncidentWrapper incidents={incidents} setIncidents={setIncidents} />} />
-      </Routes>
-    </Router>
-  );
+  <Routes>
+    <Route path="/" element={<LandingWrapper incidents={incidents} setIncidents={setIncidents} />} />
+    <Route path="/incident/:id" element={<IncidentWrapper incidents={incidents} setIncidents={setIncidents} />} />
+  </Routes>
+);
+
 }
 
 // Wrap LandingPage to access navigate
-function LandingWrapper({ incidents, setIncidents }) {
+function LandingWrapper({ incidents, setIncidents, setAuthenticated }) {
   const navigate = useNavigate();
+
 
   const createIncident = () => {
   console.log('🆕 createIncident triggered');
@@ -83,27 +120,34 @@ function LandingWrapper({ incidents, setIncidents }) {
 
   return (
     <LandingPage
-      incidents={incidents}
-      onCreateIncident={createIncident}
-      onConcludeIncident={(id) => {
-        const updated = incidents.map(i =>
-          i.id === id ? { ...i, status: 'Concluded', lastUpdate: new Date().toISOString() } : i
-        );
-        setIncidents(updated);
-      }}
-      onReopenIncident={(id) => {
-        const updated = incidents.map(i =>
-          i.id === id ? { ...i, status: 'Ongoing', lastUpdate: new Date().toISOString() } : i
-        );
-        setIncidents(updated);
-      }}
-      onRenameIncident={(id, newTitle) => {
-        const updated = incidents.map(i =>
-          i.id === id ? { ...i, title: newTitle, lastUpdate: new Date().toISOString() } : i
-        );
-        setIncidents(updated);
-      }}
-    />
+  incidents={incidents}
+  onCreateIncident={createIncident}
+  onConcludeIncident={(id) => {
+    const updated = incidents.map(i =>
+      i.id === id ? { ...i, status: 'Concluded', lastUpdate: new Date().toISOString() } : i
+    );
+    setIncidents(updated);
+  }}
+  onReopenIncident={(id) => {
+    const updated = incidents.map(i =>
+      i.id === id ? { ...i, status: 'Ongoing', lastUpdate: new Date().toISOString() } : i
+    );
+    setIncidents(updated);
+  }}
+  onRenameIncident={(id, newTitle) => {
+    const updated = incidents.map(i =>
+      i.id === id ? { ...i, title: newTitle, lastUpdate: new Date().toISOString() } : i
+    );
+    setIncidents(updated);
+  }}
+  onLogout={() => {
+  localStorage.removeItem('authenticated');
+  setAuthenticated(false);
+  setLogoutTriggered(true);
+}}
+
+/>
+
   );
 }
 

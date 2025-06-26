@@ -6,8 +6,10 @@ export default function LandingPage({
   onCreateIncident,
   onConcludeIncident,
   onReopenIncident,
-  onRenameIncident
+  onRenameIncident,
+  onLogout // ✅ add this
 }) {
+
   const navigate = useNavigate();
   const [editingId, setEditingId] = useState(null);
   const [editedTitle, setEditedTitle] = useState('');
@@ -26,7 +28,17 @@ export default function LandingPage({
   return (
     <div className="min-h-screen bg-[#0d1117] text-white p-6">
       <div className="max-w-6xl mx-auto">
-        <header className="text-center mb-8">
+        <div className="flex justify-between items-center mb-4">
+  <div></div> {/* spacer to push button right */}
+  <button
+    onClick={onLogout}
+    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+  >
+    Log Out
+  </button>
+</div>
+
+          <header className="text-center mb-8">
           <h1 className="text-5xl font-bold">Stranded Trains Manager – By LR</h1>
           <p className="text-gray-400 mt-3 text-lg">Track, manage and resolve rail incidents efficiently.</p>
         </header>
