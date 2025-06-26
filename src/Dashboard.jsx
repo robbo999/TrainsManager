@@ -141,7 +141,7 @@ setTrains([...trains, newEntry]);
 <div className="bg-[#161b22] p-6 rounded mb-6 flex justify-between items-center">
   {/* TIMER DISPLAY - BIG */}
   <div className="flex flex-col items-start gap-4">
-    <span className="text-8xl font-bold text-white leading-none">⏱ {formatTime(timer)}</span>
+    <span className="text-8xl font-bold text-white leading-none"> {formatTime(timer)}</span>
     <div className="flex gap-2">
       <button onClick={startTimer} className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm">Start</button>
       <button onClick={stopTimer} className="bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded text-sm text-black">Stop</button>
