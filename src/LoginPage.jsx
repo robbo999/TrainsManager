@@ -16,8 +16,12 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-white flex flex-col justify-center items-center p-6">
-      <h1 className="text-3xl font-bold mb-4">York Control Login</h1>
+     <div className="min-h-screen bg-[#0d1117] text-white flex flex-col justify-center items-center p-6">
+    <div className="text-center mb-8">
+      <h1 className="text-4xl font-bold">Stranded Trains Manager – By LR</h1>
+      <p className="text-gray-400 mt-2">Track, manage and resolve rail incidents efficiently.</p>
+    </div>
+          
       <form onSubmit={handleLogin} className="space-y-4 w-full max-w-xs">
         <input
           type="text"
