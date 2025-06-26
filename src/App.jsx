@@ -8,96 +8,90 @@ import LoginPage from './LoginPage';
 
 const isLive = import.meta.env.MODE === 'production';
 
-
 export default function App() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [incidents, setIncidents] = useState([]);
-useEffect(() => {
-  if (isLive) {
-    const fetchFromSupabase = async () => {
-      const { data, error } = await supabase.from('incidents').select('*');
-      if (error) {
-        console.error('❌ Supabase fetch error:', error);
-      } else {
-        console.log('✅ Fetched from Supabase:', data);
-        setIncidents(data);
-      }
-    };
-    fetchFromSupabase();
-  } else {
-    const stored = localStorage.getItem('incidents');
-    if (stored) {
-      setIncidents(JSON.parse(stored));
+  const [authenticated, setAuthenticated] = useState(
+    localStorage.getItem('authenticated') === 'true'
+  );
+
+  useEffect(() => {
+    if (isLive) {
+      const fetchFromSupabase = async () => {
+        const { data, error } = await supabase.from('incidents').select('*');
+        if (error) {
+          console.error('❌ Supabase fetch error:', error);
+        } else {
+          console.log('✅ Fetched from Supabase:', data);
+          setIncidents(data);
+        }
+      };
+      fetchFromSupabase();
+    } else {
+      const stored = localStorage.getItem('incidents');
+      if (stored) setIncidents(JSON.parse(stored));
     }
+  }, []);
+
+  useEffect(() => {
+    if (isLive) {
+      console.log('🌀 incidents useEffect triggered');
+      console.log('📝 Trying to save incidents:', incidents);
+
+      const saveToSupabase = async () => {
+        for (const incident of incidents) {
+          console.log('🧪 Upserting:', incident);
+          const { error } = await supabase.from('incidents').upsert(incident);
+          if (error) console.error('❌ Supabase save error:', error);
+          else console.log('✅ Incident saved to Supabase:', incident.id);
+        }
+      };
+
+      if (incidents.length > 0) saveToSupabase();
+    } else {
+      localStorage.setItem('incidents', JSON.stringify(incidents));
+    }
+  }, [incidents]);
+
+  if (!authenticated) {
+    return (
+      <LoginPage onLogin={() => setAuthenticated(true)} />
+    );
   }
-}, []);
-const [authenticated, setAuthenticated] = useState(
-  localStorage.getItem('authenticated') === 'true'
-);
 
-
-if (!authenticated) {
   return (
-    <LoginPage onLogin={() => setAuthenticated(true)} />
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <LandingWrapper
+            incidents={incidents}
+            setIncidents={setIncidents}
+            setAuthenticated={setAuthenticated}
+          />
+        }
+      />
+      <Route
+        path="/incident/:id"
+        element={
+          <IncidentWrapper
+            incidents={incidents}
+            setIncidents={setIncidents}
+          />
+        }
+      />
+    </Routes>
   );
 }
 
-return (
-  <Routes>
-    <Route
-  path="/"
-  element={
-    <LandingWrapper
-      incidents={incidents}
-      setIncidents={setIncidents}
-      setAuthenticated={setAuthenticated} // ✅ Add this
-    />
-  }
-/>
-    <Route
-      path="/incident/:id"
-      element={
-        <IncidentWrapper
-          incidents={incidents}
-          setIncidents={setIncidents}
-        />
-      }
-    />
-  </Routes>
-);
 
 
 
-useEffect(() => {
-  if (isLive) {
-    console.log('🌀 incidents useEffect triggered');
-    console.log('📝 Trying to save incidents:', incidents);
-
-    const saveToSupabase = async () => {
-      for (const incident of incidents) {
-        console.log('🧪 Upserting:', incident);
-        const { error } = await supabase.from('incidents').upsert(incident);
-        if (error) console.error('❌ Supabase save error:', error);
-        else console.log('✅ Incident saved to Supabase:', incident.id);
-      }
-    };
-
-    if (incidents.length > 0) saveToSupabase();
-  } else {
-    localStorage.setItem('incidents', JSON.stringify(incidents));
-  }
-}, [incidents]);
 
 
 
-  return (
-  <Routes>
-    <Route path="/" element={<LandingWrapper incidents={incidents} setIncidents={setIncidents} />} />
-    <Route path="/incident/:id" element={<IncidentWrapper incidents={incidents} setIncidents={setIncidents} />} />
-  </Routes>
-);
 
-}
+
 
 // Wrap LandingPage to access navigate
 function LandingWrapper({ incidents, setIncidents, setAuthenticated }) {
@@ -143,7 +137,6 @@ function LandingWrapper({ incidents, setIncidents, setAuthenticated }) {
   onLogout={() => {
   localStorage.removeItem('authenticated');
   setAuthenticated(false);
-  setLogoutTriggered(true);
 }}
 
 />
