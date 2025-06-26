@@ -51,7 +51,7 @@ function LandingWrapper({ incidents, setIncidents }) {
       trains: []
     };
     setIncidents([...incidents, newIncident]);
-    navigate(`/incident/${id}`);
+   
   };
 
   return (
