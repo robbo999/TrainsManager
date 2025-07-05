@@ -139,18 +139,23 @@ export default function Dashboard({ incident, onUpdate }) {
     
   const [showForm, setShowForm] = useState(true);
   const [newTrain, setNewTrain] = useState({
-    train: '',
-    location: '',
-    class: '',
-    serviceGroup: '',
-    passengerGroup: 'Green',
-    passengerRationale: '',
-    canMove: false,
-    timeStranded: '',
-    ccilRef: '',
-    btpRef: '',
-    initialUpdate: ''
-  });
+  train: '',
+  location: '',
+  class: '',
+  serviceGroup: '',
+  passengerGroup: 'Green',
+  passengerRationale: '',
+  canMove: false,
+  timeStranded: '',
+  ccilRef: '',
+  btpRef: '',
+  initialUpdate: '',
+  planA: '',
+  planB: '',
+  planC: '',
+  activePlan: 'A'
+});
+
   const [showAdvanced, setShowAdvanced] = useState(false);
 React.useEffect(() => {
   const interval = setInterval(() => {
@@ -234,9 +239,23 @@ const newEntry = {
 console.log('🚆 Adding train:', newEntry);    
 setTrains([...trains, newEntry]);
     setNewTrain({
-      train: '', location: '', class: '', serviceGroup: '', passengerGroup: 'Green',
-      passengerRationale: '', canMove: false, timeStranded: '', ccilRef: '', btpRef: '', initialUpdate: ''
-    });
+  train: '',
+  location: '',
+  class: '',
+  serviceGroup: '',
+  passengerGroup: 'Green',
+  passengerRationale: '',
+  canMove: false,
+  timeStranded: '',
+  ccilRef: '',
+  btpRef: '',
+  initialUpdate: '',
+  planA: '',
+  planB: '',
+  planC: '',
+  activePlan: 'A'
+});
+
   };
 
   return (
