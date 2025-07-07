@@ -19,7 +19,10 @@ export default function TimerPanel({
       <input
         type="checkbox"
         checked={extremeWeather}
-        onChange={() => setExtremeWeather(!extremeWeather)}
+        onChange={(e) => {
+  setExtremeWeather(e.target.checked);
+}}
+
         className="h-5 w-5 accent-yellow-400 bg-white border-2 border-yellow-400 rounded cursor-pointer"
       />
       <label className="text-sm font-medium text-white">
