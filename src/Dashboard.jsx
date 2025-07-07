@@ -5,6 +5,9 @@ import TrainForm from './components/TrainForm';
 import TimerPanel from './components/TimerPanel';
 import TrainDetailPanel from './components/TrainDetailPanel';
 import AdvancedPanel from './components/AdvancedPanel';
+import UpdatePanel from './components/UpdatePanel';
+  import { getLogTimestamp } from './utils/logUtils';
+
 
 
 
@@ -26,6 +29,7 @@ export default function Dashboard({ incident, onUpdate }) {
   const [trains, setTrains] = useState(incident.trains || []);
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+    const [showUpdates, setShowUpdates] = useState(false); 
     
     const [extremeWeather, setExtremeWeather] = useState(false);
 
@@ -57,7 +61,12 @@ export default function Dashboard({ incident, onUpdate }) {
     
     
     
-    useEffect(() => {
+   useEffect(() => {
+  const now = new Date();
+  const timestamp = now.toLocaleTimeString('en-GB', { hour12: false });
+       const username = localStorage.getItem('username') || 'System';
+
+
   if (extremeWeather) {
     setTrains(prev =>
       prev.map(train => {
@@ -72,7 +81,15 @@ export default function Dashboard({ incident, onUpdate }) {
         return {
           ...train,
           reviewCycle: '15m',
-          nextReview: reviewTime.toISOString()
+          nextReview: reviewTime.toISOString(),
+          extremeWeather: true,
+          updates: [
+            ...(train.updates || []),
+            {
+              time: timestamp,
+              message: `🌧️ Extreme weather activated — review cycle fixed at 15m by ${username}`
+            }
+          ]
         };
       })
     );
@@ -109,12 +126,21 @@ export default function Dashboard({ incident, onUpdate }) {
           riskScore: score,
           riskLevel: score >= 11 ? 'Red' : score >= 6 ? 'Amber' : 'Green',
           reviewCycle: `${reviewMinutes}m`,
-          nextReview: reviewTime.toISOString()
+          nextReview: reviewTime.toISOString(),
+          extremeWeather: false,
+          updates: [
+            ...(train.updates || []),
+            {
+              time: timestamp,
+                  message: `🌤️ Extreme weather deactivated — risk-based review cycle restored by ${username}`
+            }
+          ]
         };
       })
     );
   }
 }, [extremeWeather]);
+
 
 
 
@@ -222,17 +248,43 @@ strandedTime.setHours(hh, mm, 0, 0);
 strandedTime.setMinutes(strandedTime.getMinutes() + reviewMinutes);
 const nextReviewDue = strandedTime;
 
+
+
+
+  const username = localStorage.getItem('username') || 'Unknown';
+
+const timestamp = getLogTimestamp(); // ✅
+
+
+  const creationLogs = Object.entries(newTrain)
+    .filter(([key, value]) => value !== '' && value !== null && key !== 'updates')
+    .map(([key, value]) => ({
+      time: timestamp,
+      message: `Field "${key}" set to "${value}" on creation by ${username}`
+    }));
+
+  creationLogs.unshift({
+    time: timestamp,
+    message: `➕ Train ${newTrain.train} added by ${username}`
+
+  });
+
+
+
+
 const newEntry = {
   ...newTrain,
   timeStranded: formattedTimeStranded,
   riskScore: score,
   riskLevel: level,
-  reviewCycle, // ✅ '10m', '15m', or '30m'
+  reviewCycle,
   nextReview: nextReviewDue.toISOString(),
   lastUpdate: new Date().toLocaleTimeString(),
-  canMove: newTrain.canMove ? 'Yes' : 'No'
+  canMove: newTrain.canMove ? 'Yes' : 'No',
+  updates: creationLogs // ✅ ADD THIS LINE
 };
 
+console.log('🚆 newEntry with logs:', newEntry);
 
 
 
@@ -261,7 +313,27 @@ setTrains([...trains, newEntry]);
   return (
     <div className="min-h-screen bg-[#0d1117] text-white p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-semibold mb-4">Stranded Trains Dashboard</h1> 
+       <div className="flex justify-between items-center mb-4">
+  <h1 className="text-3xl font-semibold">Stranded Trains Dashboard</h1>
+  
+  <div className="text-sm text-gray-400">
+    Logged in as: <span className="font-semibold text-white">{localStorage.getItem('username') || 'Unknown'}</span>
+    <button
+      className="ml-2 text-blue-400 hover:underline text-xs"
+      onClick={() => {
+        const name = prompt("Enter your name:");
+        if (name) {
+          localStorage.setItem('username', name);
+          window.location.reload();
+        }
+      }}
+    >
+      (Change)
+    </button>
+  </div>
+</div>
+
+
 
 
 
@@ -370,7 +442,8 @@ setTrains([...trains, newEntry]);
     setTrains={setTrains}
     trains={trains}
     showAdvanced={showAdvanced}           // ✅ required
-    setShowAdvanced={setShowAdvanced}     // ✅ required
+    setShowAdvanced={setShowAdvanced}
+setShowUpdates={setShowUpdates} 
   />
 )}
 {showAdvanced && selectedTrain && (
@@ -378,6 +451,13 @@ setTrains([...trains, newEntry]);
     selectedTrain={selectedTrain}
     setSelectedTrain={setSelectedTrain}
     setShowAdvanced={setShowAdvanced}
+  />
+)}
+{showUpdates && selectedTrain && (
+  <UpdatePanel
+    selectedTrain={selectedTrain}
+    setSelectedTrain={setSelectedTrain}
+    setShowUpdates={setShowUpdates}
   />
 )}
 
