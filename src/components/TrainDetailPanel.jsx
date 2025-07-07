@@ -27,6 +27,9 @@
 // === Final TrainDetailPanel.jsx ===
 import React, { useState } from 'react';
 
+import { getRiskAssessment } from '../utils/riskUtils';
+
+
 import {
   trainClassOptions,
   serviceGroupOptions,
@@ -34,20 +37,40 @@ import {
 } from '../utils/dropdownOptions';
 import PlanPanel from './PlanPanel';
 
+import { logChangesOnSave } from '../utils/logUtils';
 
 
-export default function TrainDetailPanel({ selectedTrain, setSelectedTrain, originalTrainId, setTrains, trains, setShowAdvanced, showAdvanced }) {
+
+
+
+export default function TrainDetailPanel({
+  selectedTrain,
+  setSelectedTrain,
+  originalTrainId,
+  setTrains,
+  trains,
+  showAdvanced,
+  setShowAdvanced,
+  setShowUpdates // ✅ Add this here
+}) {
+
   if (!selectedTrain) return null;
+    
+ 
+    
+    
     
     
     
     const [reviewConfirmedAt, setReviewConfirmedAt] = React.useState(null);
 
 
-  const handleChange = (field, value) => {
-    setSelectedTrain(prev => ({ ...prev, [field]: value }));
-  };
-    
+
+const handleChange = (field, value) => {
+  setSelectedTrain(prev => ({ ...prev, [field]: value }));
+};
+
+
     const [showPlan, setShowPlan] = useState(false);
 
 
@@ -65,24 +88,11 @@ if (timeRegex.test(selectedTrain.timeStranded)) {
 }
 
 
-  const tractionRag = ['700', '717', '379'].includes(selectedTrain.class)
-  ? 'Red'
-  : ['801', '180', '170', '185', '197'].includes(selectedTrain.class)
-  ? 'Amber'
-  : 'Green';
+const { riskScore, riskLevel, reviewCycle } = getRiskAssessment(selectedTrain);
 
-const serviceRag = ['Airport Services', 'Commuter'].includes(selectedTrain.serviceGroup)
-  ? 'Red'
-  : ['Sleeper', 'Short-Distance'].includes(selectedTrain.serviceGroup)
-  ? 'Amber'
-  : 'Green';
+    
 
-const passengerRag = selectedTrain.passengerGroup;
-const scores = { Red: 5, Amber: 3, Green: 1 };
-const riskScore = scores[tractionRag] + scores[serviceRag] + scores[passengerRag];
-const riskLevel = riskScore >= 11 ? 'Red' : riskScore >= 6 ? 'Amber' : 'Green';
-const reviewCycle = `${riskScore >= 11 ? 15 : riskScore >= 6 ? 20 : 30}m`;
-
+    
 const updatedTrain = {
   ...selectedTrain,
   timeStranded: formattedTimeStranded,
@@ -93,8 +103,67 @@ const updatedTrain = {
   lastUpdate: new Date().toLocaleTimeString()
 };
 
+    
+const originalTrain = trains.find(t => t.train === originalTrainId);
+    const planChanged = originalTrain.activePlan !== selectedTrain.activePlan;
 
-  setTrains(trains.map(t => t.train === originalTrainId ? updatedTrain : t));
+    
+    const riskChanged =
+  originalTrain.riskScore !== riskScore ||
+  originalTrain.riskLevel !== riskLevel ||
+  originalTrain.reviewCycle !== reviewCycle;
+let systemUpdate = null;
+
+if (riskChanged) {
+  const username = localStorage.getItem('username') || 'System';
+  const now = new Date();
+  const timestamp = `${now.getHours().toString().padStart(2, '0')}:` +
+                    `${now.getMinutes().toString().padStart(2, '0')}:` +
+                    `${now.getSeconds().toString().padStart(2, '0')}`;
+
+  systemUpdate = {
+    time: timestamp,
+    message: `⚙️ Risk updated to score ${riskScore} (${riskLevel}) with review every ${reviewCycle} by ${username}`
+  };
+}
+
+
+let planUpdate = null;
+
+if (planChanged) {
+  const username = localStorage.getItem('username') || 'System';
+  const now = new Date();
+  const timestamp = `${now.getHours().toString().padStart(2, '0')}:` +
+                    `${now.getMinutes().toString().padStart(2, '0')}:` +
+                    `${now.getSeconds().toString().padStart(2, '0')}`;
+
+  planUpdate = {
+    time: timestamp,
+    message: `🧭 Active plan changed to ${selectedTrain.activePlan} by ${username}`
+  };
+}
+    
+    
+
+ const changeLogs = logChangesOnSave(
+  trains.find(t => t.train === originalTrainId),
+  updatedTrain
+);
+
+const updatedWithLogs = {
+  ...updatedTrain,
+  updates: [
+  ...(selectedTrain.updates || []),
+  ...changeLogs,
+  ...(systemUpdate ? [systemUpdate] : []),
+  ...(planUpdate ? [planUpdate] : [])
+]
+
+};
+
+
+setTrains(trains.map(t => t.train === originalTrainId ? updatedWithLogs : t));
+
   setSelectedTrain(null); // ✅ This closes the panel
 };
 
@@ -121,25 +190,35 @@ const updatedTrain = {
 
       <select
   className="w-full bg-[#0d1117] border border-gray-700 p-2 rounded mb-2"
-  value={selectedTrain.class}
+  value={selectedTrain.class || ''}
   onChange={(e) => handleChange('class', e.target.value)}
 >
+  <option value="">Select Class</option>
   {trainClassOptions.map(opt => (
-    <option key={opt.value} value={opt.value}>{opt.label}</option>
+    <option key={opt.value} value={opt.value}>
+      {opt.label}
+    </option>
   ))}
 </select>
+
+
 
 
 
       <select
   className="w-full bg-[#0d1117] border border-gray-700 p-2 rounded mb-2"
-  value={selectedTrain.serviceGroup}
+  value={selectedTrain.serviceGroup || ''}
   onChange={(e) => handleChange('serviceGroup', e.target.value)}
 >
+  <option value="">Select Service Group</option>
   {serviceGroupOptions.map(opt => (
-    <option key={opt.value} value={opt.value}>{opt.label}</option>
+    <option key={opt.value} value={opt.value}>
+      {opt.label}
+    </option>
   ))}
 </select>
+
+
 
 
 
@@ -204,6 +283,13 @@ const updatedTrain = {
 >
   Show Plan
 </button>
+          <button
+  className="mb-4 bg-yellow-700 hover:bg-yellow-800 px-4 py-2 rounded text-white text-sm ml-2"
+  onClick={() => setShowUpdates(true)}
+>
+  Updates Log
+</button>
+
           
 
 
@@ -211,38 +297,55 @@ const updatedTrain = {
       <div className="flex justify-between mt-4">
         <button className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-white" onClick={saveChanges}>Save Changes</button>
    
-            <button
-    className="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded"
-    onClick={() => {
-      const now = new Date();
-      const reviewMinutes =
-        selectedTrain.riskScore >= 11 ? 15 :
-        selectedTrain.riskScore >= 6 ? 20 : 30;
-      const nextReview = new Date(now.getTime() + reviewMinutes * 60000).toISOString();
+        <button
+  className="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded"
+  onClick={() => {
+                  console.log('✅ selectedTrain.extremeWeather is:', selectedTrain.extremeWeather);
 
-      const updatedTrain = {
-        ...selectedTrain,
-        nextReview,
-        lastUpdate: now.toLocaleTimeString()
-      };
+  const now = new Date();
+  const timestamp = `${now.getHours().toString().padStart(2, '0')}:` +
+                    `${now.getMinutes().toString().padStart(2, '0')}:` +
+                    `${now.getSeconds().toString().padStart(2, '0')}`;
+  const username = localStorage.getItem('username') || 'System';
 
-      setSelectedTrain(updatedTrain);
-      setTrains(prev =>
-        prev.map(t => t.train === updatedTrain.train ? updatedTrain : t)
-      );
+  // ✅ Use helper to recalculate risk and reviewCycle based on extremeWeather
+  const { riskScore, riskLevel, reviewCycle } = getRiskAssessment(selectedTrain);
 
-      // Show confirmation
-      setReviewConfirmedAt(now.toLocaleTimeString());
-    }}
-  >
-    Acknowledge / Conduct Review
-  </button>
+  const reviewMinutes = parseInt(reviewCycle);
+  const nextReview = new Date(now.getTime() + reviewMinutes * 60000).toISOString();
 
-  {reviewConfirmedAt && (
-    <p className="text-green-400 text-sm mt-2">
-      ✅ Review acknowledged at {reviewConfirmedAt}
-    </p>
-  )}
+  const logEntry = {
+    time: timestamp,
+    message: selectedTrain.extremeWeather
+      ? `✅ Review acknowledged for ${selectedTrain.train} (🌧️ 15m forced by extreme weather) by ${username}`
+      : `✅ Review acknowledged for ${selectedTrain.train} by ${username}`
+  };
+
+  const updatedTrain = {
+    ...selectedTrain,
+    riskScore,
+    riskLevel,
+    reviewCycle,
+    nextReview,
+    lastUpdate: now.toLocaleTimeString(),
+    updates: [...(selectedTrain.updates || []), logEntry]
+  };
+
+  setSelectedTrain(updatedTrain);
+  setTrains(prev =>
+    prev.map(t => t.train === updatedTrain.train ? updatedTrain : t)
+  );
+  setReviewConfirmedAt(now.toLocaleTimeString());
+}}
+
+>
+  Acknowledge / Conduct Review
+</button>
+
+
+
+
+
 
 
 
