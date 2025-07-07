@@ -15,7 +15,19 @@ export default function App() {
     localStorage.getItem('authenticated') === 'true'
   );
 
-  useEffect(() => {
+ 
+   useEffect(() => {
+  const storedName = localStorage.getItem('username');
+  if (!storedName) {
+    const name = prompt("Enter your name for update tracking:");
+    if (name) localStorage.setItem('username', name);
+  }
+}, []);
+ 
+    
+    
+    
+    useEffect(() => {
     if (isLive) {
       const fetchFromSupabase = async () => {
         const { data, error } = await supabase.from('incidents').select('*');
