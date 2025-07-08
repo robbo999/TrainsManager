@@ -535,7 +535,7 @@ setMasterLog={setMasterLog}
     onClose={() => setShowMasterLog(false)}
   />
 )}
-{showUpdateLog && selectedTrainForUpdateLog && (
+{showUpdateLog && selectedTrain && (
   <UpdateLogPanel
   selectedTrain={selectedTrain}
   setSelectedTrain={setSelectedTrain}
