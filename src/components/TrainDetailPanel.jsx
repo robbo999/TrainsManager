@@ -313,13 +313,13 @@ setTrains(trains.map(t => t.train === originalTrainId ? updatedWithLogs : t));
           
           
           
-          
 <button
   onClick={() => setShowUpdateLog(true)}
   className="mb-4 bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded text-white text-sm ml-2"
 >
   Updates Log
 </button>
+
 
 
 
