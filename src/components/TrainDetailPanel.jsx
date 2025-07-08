@@ -290,11 +290,9 @@ setTrains(trains.map(t => t.train === originalTrainId ? updatedWithLogs : t));
         Can Move
       </label>
 
-      <input className="w-full bg-[#0d1117] border border-gray-700 p-2 rounded mb-2" placeholder="CCIL Ref (optional)" value={selectedTrain.ccilRef || ''} onChange={(e) => handleChange('ccilRef', e.target.value)} />
 
-      <input className="w-full bg-[#0d1117] border border-gray-700 p-2 rounded mb-2" placeholder="BTP Ref (optional)" value={selectedTrain.btpRef || ''} onChange={(e) => handleChange('btpRef', e.target.value)} />
-
-      <textarea className="w-full bg-[#0d1117] border border-gray-700 p-2 rounded mb-2" placeholder="Initial Update" value={selectedTrain.initialUpdate || ''} onChange={(e) => handleChange('initialUpdate', e.target.value)} />
+      <textarea className="w-full bg-[#0d1117] border border-gray-700 p-2 rounded mb-2" placeholder="Other Comments"
+ value={selectedTrain.initialUpdate || ''} onChange={(e) => handleChange('initialUpdate', e.target.value)} />
 
       <button className="mb-4 bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded text-white text-sm" onClick={() => setShowAdvanced(prev => !prev)}>
         {showAdvanced ? 'Hide' : 'Show'} Advanced Details
