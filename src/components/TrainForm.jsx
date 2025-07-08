@@ -17,27 +17,31 @@ export default function TrainForm({ newTrain, setNewTrain, addTrain }) {
 
   return (
     <div className="grid grid-cols-3 gap-4">
-      <input
-        className="bg-[#0d1117] border border-gray-700 p-2 rounded font-bold"
-        placeholder="Train Headcode"
-        value={newTrain.train}
-        onChange={(e) => setNewTrain({ ...newTrain, train: e.target.value.toUpperCase() })}
-      />
-           <label className="flex items-center col-span-1">
-        <input
-          type="checkbox"
-          className="mr-2"
-          checked={newTrain.canMove}
-          onChange={(e) => setNewTrain({ ...newTrain, canMove: e.target.checked })}
-        />
-        Can Move
-      </label>
-      <textarea
-        className="col-span-3 bg-[#0d1117] border border-gray-700 p-2 rounded"
-        placeholder="Location (e.g. UP Main at Y431 Signal)"
-        value={newTrain.location}
-        onChange={(e) => setNewTrain({ ...newTrain, location: e.target.value })}
-      />
+  <div className="col-span-3 grid grid-cols-6 gap-4">
+  <input
+    className="col-span-2 bg-[#0d1117] border border-gray-700 p-2 rounded font-bold"
+    placeholder="Train Headcode"
+    value={newTrain.train}
+    onChange={(e) => setNewTrain({ ...newTrain, train: e.target.value.toUpperCase() })}
+  />
+  <label className="col-span-1 flex items-center">
+    <input
+      type="checkbox"
+      className="mr-2"
+      checked={newTrain.canMove}
+      onChange={(e) => setNewTrain({ ...newTrain, canMove: e.target.checked })}
+    />
+    Can Move
+  </label>
+  <textarea
+    className="col-span-3 bg-[#0d1117] border border-gray-700 p-2 rounded"
+    placeholder="Location (e.g. UP Main at Y431 Signal)"
+    value={newTrain.location}
+    onChange={(e) => setNewTrain({ ...newTrain, location: e.target.value })}
+  />
+</div>
+
+
      <select
   className="w-full bg-[#0d1117] border border-gray-700 p-2 rounded mb-2"
   value={newTrain.class}
@@ -118,23 +122,11 @@ export default function TrainForm({ newTrain, setNewTrain, addTrain }) {
 
 
 
-      <input
-        className="bg-[#0d1117] border border-gray-700 p-2 rounded"
-        placeholder="CCIL Ref (optional)"
-        value={newTrain.ccilRef}
-        onChange={(e) => setNewTrain({ ...newTrain, ccilRef: e.target.value })}
-      />
-
-      <input
-        className="bg-[#0d1117] border border-gray-700 p-2 rounded"
-        placeholder="BTP Ref (optional)"
-        value={newTrain.btpRef}
-        onChange={(e) => setNewTrain({ ...newTrain, btpRef: e.target.value })}
-      />
+     
 
       <textarea
         className="col-span-3 bg-[#0d1117] border border-gray-700 p-2 rounded"
-        placeholder="Initial Update"
+        placeholder="Other Comments"
         value={newTrain.initialUpdate}
         onChange={(e) => setNewTrain({ ...newTrain, initialUpdate: e.target.value })}
       />
