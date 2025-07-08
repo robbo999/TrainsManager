@@ -10,7 +10,7 @@ import UpdatePanel from './components/UpdatePanel';
 import MasterLogPanel from './components/MasterLogPanel';
 import { logTrainAdded } from './utils/logUtils';
 import UpdateLogPanel from './components/UpdateLogPanel';
-
+import { generateIncidentSummary } from './utils/incidentSummary';
 
 
 
@@ -180,10 +180,11 @@ const [selectedTrainForUpdateLog, setSelectedTrainForUpdateLog] = useState(null)
 
   const startTimer = () => setIsRunning(true);
   const stopTimer = () => setIsRunning(false);
-  const resetTimer = () => {
-    setIsRunning(false);
-    setTimer(0);
-  };
+  const resetTimer = (startAt = 0) => {
+  setIsRunning(false);
+  setTimer(startAt);
+};
+
 
   const formatTime = (secs) => {
     const minutes = String(Math.floor(secs / 60)).padStart(2, '0');
@@ -353,6 +354,17 @@ setTrains([...trains, newEntry]);
 
   };
 
+const handleSummariseIncident = () => {
+  const summary = generateIncidentSummary(trains, incident?.title || "Unnamed Incident");
+  navigator.clipboard.writeText(summary).then(() => {
+    alert("✅ Incident summary copied to clipboard.");
+  }).catch((err) => {
+    alert("❌ Failed to copy summary.");
+    console.error(err);
+  });
+};
+
+
   return (
     <div className="min-h-screen bg-[#0d1117] text-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -394,6 +406,14 @@ setTrains([...trains, newEntry]);
     >
       (Change)
     </button>
+
+<button
+  onClick={handleSummariseIncident}
+  className="bg-purple-700 hover:bg-purple-800 text-white text-sm px-3 py-1 rounded ml-2"
+>
+  Summarise Incident Now
+</button>
+
   </div>
 </div>
 
