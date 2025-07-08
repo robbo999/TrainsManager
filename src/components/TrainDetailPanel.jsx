@@ -51,7 +51,10 @@ export default function TrainDetailPanel({
   trains,
   showAdvanced,
   setShowAdvanced,
-  setShowUpdates // ✅ Add this here
+  setShowUpdates,
+    setMasterLog,
+    setShowUpdateLog,          // ← ADD THIS
+  setSelectedTrainForUpdateLog // ← AND THIS 
 }) {
 
   if (!selectedTrain) return null;
@@ -158,8 +161,18 @@ const updatedWithLogs = {
   ...(systemUpdate ? [systemUpdate] : []),
   ...(planUpdate ? [planUpdate] : [])
 ]
-
 };
+
+// ✅ Push changes to masterLog
+if (typeof setMasterLog === 'function') {
+  const masterLogEntries = [
+    ...changeLogs,
+    ...(systemUpdate ? [systemUpdate] : []),
+    ...(planUpdate ? [planUpdate] : [])
+  ].map(entry => ({ ...entry, train: selectedTrain.train }));
+
+  setMasterLog(prev => [...prev, ...masterLogEntries]);
+}
 
 
 setTrains(trains.map(t => t.train === originalTrainId ? updatedWithLogs : t));
@@ -169,19 +182,29 @@ setTrains(trains.map(t => t.train === originalTrainId ? updatedWithLogs : t));
 
 
   return (
-    <div className="fixed right-0 top-0 h-full w-1/2 bg-[#161b22] text-white p-6 overflow-y-auto shadow-lg z-50">
+<div className="fixed right-0 top-0 h-full w-1/2 bg-[#161b22] text-white p-6 overflow-y-auto shadow-lg z-50">
       {showAdvanced && (
         <div className="absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center text-white text-center px-4">
           <p className="text-sm font-semibold">Close the Advanced Panel to continue editing</p>
         </div>
       )}
 
-      <h2 className="text-xl font-semibold mb-4">Train Details – {selectedTrain.train}</h2>
+      <div className="flex justify-between items-center mb-4">
+  <h2 className="text-xl font-semibold">Train Details – {selectedTrain.train}</h2>
+  <button
+    onClick={() => setShowUpdates(true)}
+    className="text-xs text-blue-400 hover:underline"
+  >
+    Change Log
+  </button>
+</div>
+
           {selectedTrain.nextReview && new Date(selectedTrain.nextReview) < new Date() && (
   <div className="bg-red-700 text-white text-sm p-3 rounded mb-2 animate-pulse font-semibold shadow">
       ⚠️ This train is OVERDUE for review – please reassess and click "Acknowledge Review".
     </div>
 )}
+
 
 
       <input className="w-full bg-[#0d1117] border border-gray-700 p-2 rounded mb-2 font-bold" placeholder="Train Headcode" value={selectedTrain.train} onChange={(e) => handleChange('train', e.target.value.toUpperCase())} />
@@ -283,13 +306,26 @@ setTrains(trains.map(t => t.train === originalTrainId ? updatedWithLogs : t));
 >
   Show Plan
 </button>
-          <button
-  className="mb-4 bg-yellow-700 hover:bg-yellow-800 px-4 py-2 rounded text-white text-sm ml-2"
-  onClick={() => setShowUpdates(true)}
+
+
+
+          
+          
+          
+          
+          
+<button
+  onClick={() => setShowUpdateLog(true)}
+  className="mb-4 bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded text-white text-sm ml-2"
 >
   Updates Log
 </button>
 
+
+
+
+          
+          
           
 
 
@@ -330,6 +366,14 @@ setTrains(trains.map(t => t.train === originalTrainId ? updatedWithLogs : t));
     lastUpdate: now.toLocaleTimeString(),
     updates: [...(selectedTrain.updates || []), logEntry]
   };
+                  
+if (typeof setMasterLog === 'function') {
+  setMasterLog(prev => [
+    ...prev,
+    { ...logEntry, train: selectedTrain.train }
+  ]);
+}
+                  
 
   setSelectedTrain(updatedTrain);
   setTrains(prev =>
