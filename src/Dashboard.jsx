@@ -7,6 +7,14 @@ import TrainDetailPanel from './components/TrainDetailPanel';
 import AdvancedPanel from './components/AdvancedPanel';
 import UpdatePanel from './components/UpdatePanel';
   import { getLogTimestamp } from './utils/logUtils';
+import MasterLogPanel from './components/MasterLogPanel';
+import { logTrainAdded } from './utils/logUtils';
+import UpdateLogPanel from './components/UpdateLogPanel';
+
+
+
+
+
 
 
 
@@ -26,11 +34,21 @@ const RiskBadge = ({ level }) => {
 };
 
 export default function Dashboard({ incident, onUpdate }) {
+    const [showMasterLog, setShowMasterLog] = useState(false); // ✅ REQUIRED
+const [masterLog, setMasterLog] = useState([]); // ✅ Also required
+
   const [trains, setTrains] = useState(incident.trains || []);
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
     const [showUpdates, setShowUpdates] = useState(false); 
-    
+    const [showUpdateLog, setShowUpdateLog] = useState(false);
+const [selectedTrainForUpdateLog, setSelectedTrainForUpdateLog] = useState(null);
+
+
+
+
+
+      
     const [extremeWeather, setExtremeWeather] = useState(false);
 
 
@@ -64,10 +82,11 @@ export default function Dashboard({ incident, onUpdate }) {
    useEffect(() => {
   const now = new Date();
   const timestamp = now.toLocaleTimeString('en-GB', { hour12: false });
-       const username = localStorage.getItem('username') || 'System';
-
+  const username = localStorage.getItem('username') || 'System';
 
   if (extremeWeather) {
+    const logs = [];
+
     setTrains(prev =>
       prev.map(train => {
         const match = train.timeStranded.match(/^(\d{2}):(\d{2})/);
@@ -78,22 +97,29 @@ export default function Dashboard({ incident, onUpdate }) {
         reviewTime.setHours(hh, mm, 0, 0);
         reviewTime.setMinutes(reviewTime.getMinutes() + 15);
 
+        const logEntry = {
+          time: timestamp,
+          message: `🌧️ Extreme weather activated — review cycle fixed at 15m by ${username}`
+        };
+        logs.push({ ...logEntry, train: train.train });
+
         return {
           ...train,
           reviewCycle: '15m',
           nextReview: reviewTime.toISOString(),
           extremeWeather: true,
-          updates: [
-            ...(train.updates || []),
-            {
-              time: timestamp,
-              message: `🌧️ Extreme weather activated — review cycle fixed at 15m by ${username}`
-            }
-          ]
+          updates: [...(train.updates || []), logEntry]
         };
       })
     );
+
+    if (typeof setMasterLog === 'function') {
+      setMasterLog(prev => [...prev, ...logs]);
+    }
+
   } else {
+    const logs = [];
+
     setTrains(prev =>
       prev.map(train => {
         const tractionRag = ['700', '717', '379'].includes(train.class)
@@ -121,6 +147,12 @@ export default function Dashboard({ incident, onUpdate }) {
         reviewTime.setHours(hh, mm, 0, 0);
         reviewTime.setMinutes(reviewTime.getMinutes() + reviewMinutes);
 
+        const logEntry = {
+          time: timestamp,
+          message: `🌤️ Extreme weather deactivated — risk-based review cycle restored by ${username}`
+        };
+        logs.push({ ...logEntry, train: train.train });
+
         return {
           ...train,
           riskScore: score,
@@ -128,16 +160,14 @@ export default function Dashboard({ incident, onUpdate }) {
           reviewCycle: `${reviewMinutes}m`,
           nextReview: reviewTime.toISOString(),
           extremeWeather: false,
-          updates: [
-            ...(train.updates || []),
-            {
-              time: timestamp,
-                  message: `🌤️ Extreme weather deactivated — risk-based review cycle restored by ${username}`
-            }
-          ]
+          updates: [...(train.updates || []), logEntry]
         };
       })
     );
+
+    if (typeof setMasterLog === 'function') {
+      setMasterLog(prev => [...prev, ...logs]);
+    }
   }
 }, [extremeWeather]);
 
@@ -230,6 +260,7 @@ React.useEffect(() => {
       formattedTimeStranded = `${newTrain.timeStranded} (${diffMins}m)`;
     }
 
+
     const tractionRag = ['700', '717', '379'].includes(newTrain.class) ? 'Red' : ['801', '180'].includes(newTrain.class) ? 'Amber' : 'Green';
     const serviceRag = ['Airport Services', 'Commuter'].includes(newTrain.serviceGroup) ? 'Red' : ['Sleeper'].includes(newTrain.serviceGroup) ? 'Amber' : 'Green';
     const passengerRag = newTrain.passengerGroup;
@@ -269,6 +300,17 @@ const timestamp = getLogTimestamp(); // ✅
 
   });
 
+if (typeof setMasterLog === 'function') {
+  setMasterLog(prev => [
+    ...prev,
+    ...(newEntry.updates || []).map(log => ({
+      ...log,
+      train: newEntry.train
+    }))
+  ]);
+}
+
+
 
 
 
@@ -281,6 +323,7 @@ const newEntry = {
   nextReview: nextReviewDue.toISOString(),
   lastUpdate: new Date().toLocaleTimeString(),
   canMove: newTrain.canMove ? 'Yes' : 'No',
+freeTextUpdates: [],
   updates: creationLogs // ✅ ADD THIS LINE
 };
 
@@ -314,10 +357,31 @@ setTrains([...trains, newEntry]);
     <div className="min-h-screen bg-[#0d1117] text-white p-6">
       <div className="max-w-7xl mx-auto">
        <div className="flex justify-between items-center mb-4">
-  <h1 className="text-3xl font-semibold">Stranded Trains Dashboard</h1>
+  <h1 className="text-2xl font-bold text-white mb-4">
+  Stranded Trains Dashboard
+  {incident?.title && (
+    <span className="text-gray-400 text-base font-normal ml-3">
+      — {incident.title}
+    </span>
+  )}
+</h1>
+
   
-  <div className="text-sm text-gray-400">
-    Logged in as: <span className="font-semibold text-white">{localStorage.getItem('username') || 'Unknown'}</span>
+<div className="flex justify-end items-center gap-4 px-4 py-2 bg-[#161b22]">
+  {/* Master Log Button */}
+  <button
+    onClick={() => setShowMasterLog(true)}
+    className="text-sm bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600"
+  >
+    Master Log
+  </button>
+
+  {/* Logged in as block */}
+  <div className="text-sm text-gray-400 flex items-center">
+    Logged in as: 
+    <span className="ml-1 font-semibold text-white">
+      {localStorage.getItem('username') || 'Unknown'}
+    </span>
     <button
       className="ml-2 text-blue-400 hover:underline text-xs"
       onClick={() => {
@@ -331,6 +395,8 @@ setTrains([...trains, newEntry]);
       (Change)
     </button>
   </div>
+</div>
+
 </div>
 
 
@@ -444,6 +510,9 @@ setTrains([...trains, newEntry]);
     showAdvanced={showAdvanced}           // ✅ required
     setShowAdvanced={setShowAdvanced}
 setShowUpdates={setShowUpdates} 
+setMasterLog={setMasterLog}
+ setShowUpdateLog={setShowUpdateLog}
+  setSelectedTrainForUpdateLog={setSelectedTrainForUpdateLog}
   />
 )}
 {showAdvanced && selectedTrain && (
@@ -460,6 +529,30 @@ setShowUpdates={setShowUpdates}
     setShowUpdates={setShowUpdates}
   />
 )}
+{showMasterLog && (
+  <MasterLogPanel
+    masterLog={masterLog}
+    onClose={() => setShowMasterLog(false)}
+  />
+)}
+{showUpdateLog && selectedTrainForUpdateLog && (
+  <UpdateLogPanel
+  selectedTrain={selectedTrain}
+  setSelectedTrain={setSelectedTrain}
+  trains={trains}
+  setTrains={setTrains}
+  trainId={selectedTrain.train}
+  setMasterLog={setMasterLog}
+  setShowUpdateLog={setShowUpdateLog}
+  onClose={() => {
+    setShowUpdateLog(false);
+  }}
+/>
+
+)}
+
+
+
 
 
 
